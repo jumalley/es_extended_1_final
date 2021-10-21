@@ -23,19 +23,19 @@ end)
 Replace `self.getMoney = function ()`.
 
 ```lua
-self.getMoney = function()
-	if self.getInventoryItem('cash') ~= "xPlayernil" then
-		local cash = self.getInventoryItem('cash')
-		if cash ~= nil then
-			if self.getAccount('money').money ~= cash.count then
-				self.setAccountMoney('money', cash.count)
+	self.getMoney = function()
+		if self.getInventoryItem('cash') ~= "xPlayernil" then
+			local cash = self.getInventoryItem('cash')
+			if cash ~= nil then
+				if self.getAccount('money').money ~= cash.count then
+					self.setAccountMoney('money', cash.count)
+				end
+			else
+				self.setAccountMoney('money', 0)
 			end
-		else
-			self.setAccountMoney('money', 0)
 		end
+		return self.getAccount('money').money
 	end
-	return self.getAccount('money').money
-end
 ```
 
 
@@ -44,17 +44,16 @@ end
 Replace `self.addMoney = function(money)`.
 
 ```lua
-self.addMoney = function(money)
-	money = ESX.Math.Round(money)
-	self.addAccountMoney('money', money)
-	if money >= 0 then
-		self.addInventoryItem("cash", money)
-		local cash = self.getInventoryItem('cash')
-		if self.getAccount('money').money ~= cash.count then
-			self.setAccountMoney('money', cash.count) 
+	self.addMoney = function(money)
+		money = ESX.Math.Round(money)
+		if money >= 0 then
+			self.addInventoryItem("cash", money)
+			local cash = self.getInventoryItem('cash')
+			if self.getAccount('money').money ~= cash.count then
+				self.setAccountMoney('money', cash.count)
+			end
 		end
 	end
-end
 ```
 
 
@@ -73,33 +72,33 @@ end
 Replace `self.addAccountMoney = function(accountName, money)`.
 
 ```lua
-self.addAccountMoney = function(accountName, money)
-	if money > 0 then
-		if accountName == 'money' then
-			self.addInventoryItem("cash", money)
-			local cash = self.getInventoryItem('cash')
-			if self.getAccount('money').money ~= cash.count then
-				self.setAccountMoney('money', cash.count)
-			end
-		else
-			if accountName == 'black_money' then
-				self.addInventoryItem("black_money", money)
-				local cash = self.getInventoryItem('black_money')
-				if self.getAccount('black_money').money ~= cash.count then
-					self.setAccountMoney('black_money', cash.count)
+	self.addAccountMoney = function(accountName, money)
+		if money > 0 then
+			if accountName == 'money' then
+				self.addInventoryItem("cash", money)
+				local cash = self.getInventoryItem('cash')
+				if self.getAccount('money').money ~= cash.count then
+					self.setAccountMoney('money', cash.count)
 				end
 			else
-				local account = self.getAccount(accountName)
-				if account then
-					local newMoney = account.money + ESX.Math.Round(money)
-					account.money = newMoney
+				if accountName == 'black_money' then
+					self.addInventoryItem("black_money", money)
+					local cash = self.getInventoryItem('black_money')
+					if self.getAccount('black_money').money ~= cash.count then
+						self.setAccountMoney('black_money', cash.count)
+					end
+				else
+					local account = self.getAccount(accountName)
+					if account then
+						local newMoney = account.money + ESX.Math.Round(money)
+						account.money = newMoney
 		
-					self.triggerEvent('esx:setAccountMoney', account)
+						self.triggerEvent('esx:setAccountMoney', account)
+					end
 				end
 			end
 		end
 	end
-end
 ```
 
 
@@ -108,41 +107,41 @@ end
 Replace `self.removeAccountMoney = function(accountName, money)`.
 
 ```lua
-self.removeAccountMoney = function(accountName, money)
-	if money > 0 then
-		if accountName == 'money' then
-			self.removeInventoryItem("cash", money)
-			local cash = self.getInventoryItem('cash')
-			if cash ~= nil then
-				if self.getAccount('money').money ~= cash.count then
-					self.setAccountMoney('money', cash.count)
-				end
-			else
-				self.setAccountMoney('money', 0)
-			end
-		else
-			if accountName == 'black_money' then
-				self.removeInventoryItem("black_money", money)
-				local cash = self.getInventoryItem('black_money')
+	self.removeAccountMoney = function(accountName, money)
+		if money > 0 then
+			if accountName == 'money' then
+				self.removeInventoryItem("cash", money)
+				local cash = self.getInventoryItem('cash')
 				if cash ~= nil then
-					if self.getAccount('black_money').money ~= cash.count then
-						self.setAccountMoney('black_money', cash.count)
+					if self.getAccount('money').money ~= cash.count then
+						self.setAccountMoney('money', cash.count)
 					end
 				else
-					self.setAccountMoney('black_money', 0)
+					self.setAccountMoney('money', 0)
 				end
 			else
-				local account = self.getAccount(accountName)
-				if account then
-					local newMoney = account.money - ESX.Math.Round(money)
-					account.money = newMoney
+				if accountName == 'black_money' then
+					self.removeInventoryItem("black_money", money)
+					local cash = self.getInventoryItem('black_money')
+					if cash ~= nil then
+						if self.getAccount('black_money').money ~= cash.count then
+							self.setAccountMoney('black_money', cash.count)
+						end
+					else
+						self.setAccountMoney('black_money', 0)
+					end
+				else
+					local account = self.getAccount(accountName)
+					if account then
+						local newMoney = account.money - ESX.Math.Round(money)
+						account.money = newMoney
 	
-					self.triggerEvent('esx:setAccountMoney', account)
+						self.triggerEvent('esx:setAccountMoney', account)
+					end
 				end
 			end
 		end
 	end
-end
 ```
 
 
@@ -171,15 +170,15 @@ self.getInventoryItem = function(name)
 Replace `self.addInventoryItem = function(name, count)`.
 
 ```lua
-self.addInventoryItem = function(name, count)
-	TriggerEvent('inventory:server:addItem', self.source, name, count)
-	if name == 'cash' then
-		local cash = self.getInventoryItem('cash')
-		if self.getAccount('money').money ~= cash.count then
-			self.setAccountMoney('money', cash.count)
+	self.addInventoryItem = function(name, count)
+		TriggerEvent('inventory:server:esyaver', self.source, name, count)
+		if name == 'cash' then
+			local cash = self.getInventoryItem('cash')
+			if self.getAccount('money').money ~= cash.count then
+				self.setAccountMoney('money', cash.count)
+			end
 		end
 	end
-end
 ```
 
 
@@ -188,19 +187,19 @@ end
 Replace `self.removeInventoryItem = function(name, count)`.
 
 ```lua
-self.removeInventoryItem = function(name, count)
-	TriggerEvent('inventory:server:removeItem', self.source, name, count)
-	if name == 'cash' then
-		local cash = self.getInventoryItem('cash')
-		if cash ~= nil then
-			if self.getAccount('money').money ~= cash.count then
-				self.setAccountMoney('money', cash.count)
+	self.removeInventoryItem = function(name, count)
+		TriggerEvent('inventory:server:esyasil', self.source, name, count)
+		if name == 'cash' then
+			local cash = self.getInventoryItem('cash')
+			if cash ~= nil then
+				if self.getAccount('money').money ~= cash.count then
+					self.setAccountMoney('money', cash.count)
+				end
+			else
+				self.setAccountMoney('money', 0)
 			end
-		else
-			self.setAccountMoney('money', 0)
 		end
 	end
-end
 ```
 
 
@@ -223,7 +222,6 @@ self.canCarryItem = function(name, count)
 	return true
 end
 ```
-
 
 
 ## es_extended/server/commands.lua.
