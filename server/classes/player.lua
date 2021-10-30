@@ -15,7 +15,7 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 	self.weight = weight
 	self.maxWeight = Config.MaxWeight
 
-	ExecuteCommand(('add_principal identifier.%s group.%s'):format(self.identifier, self.group))
+	ExecuteCommand(('add_principal identifier.license:%s group.%s'):format(self.identifier, self.group))
 
 	self.triggerEvent = function(eventName, ...)
 		TriggerClientEvent(eventName, self.source, ...)
@@ -58,6 +58,16 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 				self.setAccountMoney('money', 0)
 			end
 		end
+		if self.getInventoryItem('black_money') ~= "xPlayernil" then
+			local black_money = self.getInventoryItem('black_money')
+			if black_money ~= nil then
+				if self.getAccount('black_money').money ~= black_money.count then
+					self.setAccountMoney('black_money', black_money.count)
+				end
+			else
+				self.setAccountMoney('black_money', 0)
+			end
+		end
 		return self.getAccount('money').money
 	end
 
@@ -72,17 +82,30 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 		end
 	end
 
-	self.removeMoney = function(money)
-		money = ESX.Math.Round(money)
-		if money >= 0 then
-			self.removeInventoryItem("cash", money)
-			local cash = self.getInventoryItem('cash')
-			if cash ~= nil then
+	self.addAccountMoney = function(accountName, money)
+		if money > 0 then
+			if accountName == 'money' then
+				self.addInventoryItem("cash", money)
+				local cash = self.getInventoryItem('cash')
 				if self.getAccount('money').money ~= cash.count then
 					self.setAccountMoney('money', cash.count)
 				end
 			else
-				self.setAccountMoney('money', 0)
+				if accountName == 'black_money' then
+					self.addInventoryItem("black_money", money)
+					local cash = self.getInventoryItem('black_money')
+					if self.getAccount('black_money').money ~= cash.count then
+						self.setAccountMoney('black_money', cash.count)
+					end
+				else
+					local account = self.getAccount(accountName)
+					if account then
+						local newMoney = account.money + ESX.Math.Round(money)
+						account.money = newMoney
+				
+						self.triggerEvent('esx:setAccountMoney', account)
+					end
+				end
 			end
 		end
 	end
@@ -92,9 +115,9 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 	end
 
 	self.setGroup = function(newGroup)
-		ExecuteCommand(('remove_principal identifier.%s group.%s'):format(self.identifier, self.group))
+		ExecuteCommand(('remove_principal identifier.license:%s group.%s'):format(self.identifier, self.group))
 		self.group = newGroup
-		ExecuteCommand(('add_principal identifier.%s group.%s'):format(self.identifier, self.group))
+		ExecuteCommand(('add_principal identifier.license:%s group.%s'):format(self.identifier, self.group))
 	end
 
 	self.getGroup = function()
@@ -204,20 +227,13 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 
 	self.addAccountMoney = function(accountName, money)
 		if money > 0 then
-			if accountName == 'money' then
-				self.addInventoryItem("cash", money)
-				local cash = self.getInventoryItem('cash')
-				if self.getAccount('money').money ~= cash.count then
-					self.setAccountMoney('money', cash.count)
-				end
-			else
-				if accountName == 'black_money' then
-					self.addInventoryItem("black_money", money)
-					local cash = self.getInventoryItem('black_money')
-					if self.getAccount('black_money').money ~= cash.count then
-						self.setAccountMoney('black_money', cash.count)
-					end
-				end
+			local account = self.getAccount(accountName)
+
+			if account then
+				local newMoney = account.money + ESX.Math.Round(money)
+				account.money = newMoney
+
+				self.triggerEvent('esx:setAccountMoney', account)
 			end
 		end
 	end
@@ -228,8 +244,8 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 				self.removeInventoryItem("cash", money)
 				local cash = self.getInventoryItem('cash')
 				if cash ~= nil then
-					if self.getAccount('money').money ~= cash.count then
-						self.setAccountMoney('money', cash.count)
+				if self.getAccount('money').money ~= cash.count then
+							self.setAccountMoney('money', cash.count)
 					end
 				else
 					self.setAccountMoney('money', 0)
@@ -245,24 +261,31 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 					else
 						self.setAccountMoney('black_money', 0)
 					end
+				else
+					local account = self.getAccount(accountName)
+					if account then
+						local newMoney = account.money - ESX.Math.Round(money)
+						account.money = newMoney
+						self.triggerEvent('esx:setAccountMoney', account)
+					end
 				end
 			end
 		end
 	end
 
 	self.getInventoryItem = function(name)
-        local Item = exports['qs-core']:GetItem(self.source, name)
-        if Item == "xPlayernil" then
-            return "xPlayernil"
-        end
-        if Item ~= nil then
-            Item.count = Item.amount
-            return Item
-        end
-        Item = {}
-        Item.count = 0
-        return Item
-    end
+		local Item = exports['qs-core']:GetItem(self.source, name)
+		if Item == "xPlayernil" then
+			return "xPlayernil"
+		end
+		if Item ~= nil then
+			Item.count = Item.amount
+			return Item
+		end
+		Item = {}
+		Item.count = 0
+		return Item
+	end
 
 	self.addInventoryItem = function(name, count)
 		TriggerEvent('inventory:server:addItem', self.source, name, count)
@@ -289,6 +312,7 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 	end
 
 	self.setInventoryItem = function(name, count)
+		return true
 	end
 
 	self.getWeight = function()
@@ -300,6 +324,7 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 	end
 
 	self.canCarryItem = function(name, count)
+		return true
 	end
 
 	self.canSwapItem = function(firstItem, firstItemCount, testItem, testItemCount)
