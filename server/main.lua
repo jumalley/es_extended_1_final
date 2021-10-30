@@ -135,7 +135,7 @@ function loadESXPlayer(identifier, playerId)
 			if gradeObject.skin_female then userData.job.skin_female = json.decode(gradeObject.skin_female) end
 
 			-- Inventory
-			if result[1].inventory and result[1].inventory ~= '' then
+			--[[ if result[1].inventory and result[1].inventory ~= '' then
 				local inventory = json.decode(result[1].inventory)
 
 				for name,count in pairs(inventory) do
@@ -173,7 +173,7 @@ function loadESXPlayer(identifier, playerId)
 				userData.group = result[1].group
 			else
 				userData.group = 'user'
-			end
+			end ]]
 
 			-- Loadout
 			if result[1].loadout and result[1].loadout ~= '' then
