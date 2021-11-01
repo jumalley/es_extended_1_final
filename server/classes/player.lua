@@ -84,7 +84,17 @@ function CreateExtendedPlayer(playerId, identifier, group, accounts, inventory, 
 	
 	self.removeMoney = function(money)
 		money = ESX.Math.Round(money)
-		self.removeAccountMoney('money', money)
+		if money >= 0 then
+			self.removeInventoryItem("cash", money)
+			local cash = self.getInventoryItem('cash')
+			if cash ~= nil then
+				if self.getAccount('money').money ~= cash.count then
+					self.setAccountMoney('money', cash.count)
+				end
+			else
+				self.setAccountMoney('money', 0)
+			end
+		end
 	end
 
 	self.addAccountMoney = function(accountName, money)
